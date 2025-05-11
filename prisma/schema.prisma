@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  password String
+  role     String @default("usuario")
+  createdAt DateTime @default(now())
+}
+
+model Requisicion {
+  id            Int                   @id @default(autoincrement())
+  numero        Int                   @unique
+  fecha         DateTime
+  empresa       String
+  de            String
+  tipo          String
+  observaciones String
+  productos     ProductoRequisicion[] @relation("RequisicionProductos")
+  createdAt     DateTime              @default(now())
+}
+
+model ProductoRequisicion {
+  id            Int         @id @default(autoincrement())
+  cantidad      Int
+  descripcion   String
+  destino       String
+  requisicion   Requisicion @relation("RequisicionProductos", fields: [requisicionId], references: [id])
+  requisicionId Int
+}
+
+model VentaEquipo {
+  id             String   @id @default(cuid())
+  descripcion    String
+  marca          String
+  modelo         String
+  numeroSerie    String
+  nombreEquipo   String
+  fechaEntrega   DateTime
+  motivoEntrega  String
+  estadoGeneral  String
+  createdAt       DateTime @default(now())
+}
+
+model Acta {
+  id             Int            @id @default(autoincrement())
+  fecha          DateTime
+  nombreEmpleado String
+  nombreEmpresa  String
+  dispositivos   Dispositivo[]  @relation("ActaDispositivos")
+  createdAt      DateTime       @default(now())
+}
+
+model Dispositivo {
+  id        Int    @id @default(autoincrement())
+  descripcion String
+  actaId    Int
+  acta      Acta   @relation("ActaDispositivos", fields: [actaId], references: [id])
+}
+
+model Departamento {
+  id    Int    @id @default(autoincrement())
+  nombre String
+
+  inventarios InventarioEquipo[]
+}
+
+model TipoEquipo {
+  id    Int    @id @default(autoincrement())
+  nombre String
+
+  inventarios InventarioEquipo[]
+}
+
+model Empleado {
+  id              Int    @id @default(autoincrement())
+  nombre          String
+  identificacion  String
+  codigoEmpleado  String @unique // número de 5 dígitos, validación se hace a nivel de app
+
+  inventarios InventarioEquipo[]
+}
+
+model InventarioEquipo {
+  id              Int       @id @default(autoincrement())
+  tipoEquipoId    Int
+  numeroSerie     String    @unique
+  fechaCompra     DateTime
+  fechaAsignacion DateTime
+  activo          Boolean
+  ubicacionFisica String
+  departamentoId  Int
+  empleadoId      Int
+
+  tipoEquipo   TipoEquipo   @relation(fields: [tipoEquipoId], references: [id])
+  departamento Departamento @relation(fields: [departamentoId], references: [id])
+  empleado     Empleado     @relation(fields: [empleadoId], references: [id])
+}
